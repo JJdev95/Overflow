@@ -1,0 +1,12 @@
+.vs
+bin/
+obj/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+/infra/.env
+/infra/realms/overflow-realm.json
+/infra/.env.Production
+/infra/devcerts/*
+/infra/do/*
+/Overflow.AppHost/aspire-output/*
