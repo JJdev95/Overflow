@@ -12,6 +12,8 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+//adding this as a trigger test for sonarqube.
+
 app.UseHttpsRedirection();
 
 var summaries = new[]
