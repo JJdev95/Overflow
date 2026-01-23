@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace QuestionService.Validators;
 
+[AttributeUsage(AttributeTargets.All, Inherited = false, AllowMultiple = true)]
 public class TagListValidatorAttribute(int min, int max) : ValidationAttribute
 {
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
