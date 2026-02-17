@@ -1,12 +1,19 @@
 using Microsoft.EntityFrameworkCore;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using QuestionService.Data;
-using QuestionService.Models;
+using QuestionService.Services;
+using Wolverine;
+using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.AddServiceDefaults();
+builder.Services.AddMemoryCache();
+builder.Services.AddScoped<TagService>();
+
 builder.Services.AddAuthentication()
     .AddKeycloakJwtBearer(serviceName: "keycloak", realm: "overflow", options =>
     {
@@ -15,6 +22,19 @@ builder.Services.AddAuthentication()
     });
 
 builder.AddNpgsqlDbContext<QuestionDbContext>("questionDb");
+
+builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
+{
+    tracerProviderBuilder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+    .AddService(builder.Environment.ApplicationName))
+    .AddSource("Wolverine");
+});
+
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
+    opts.PublishAllMessages().ToRabbitExchange("questions");
+});
 
 var app = builder.Build();
 
@@ -35,11 +55,11 @@ try
     var context = services.GetRequiredService<QuestionDbContext>();
     await context.Database.MigrateAsync();
 }
-catch(Exception ex)
+catch (Exception ex)
 {
     var logger = services.GetRequiredService<ILogger<Program>>();
 
-    logger.LogError(ex,"An exception has occured while migrating the database");
+    logger.LogError(ex, "An exception has occured while migrating the database");
 }
 
-app.Run();
+await app.RunAsync();

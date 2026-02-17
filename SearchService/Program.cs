@@ -1,4 +1,12 @@
+using System.Text.RegularExpressions;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+using SearchService.Data;
+using SearchService.Models;
+using Typesense;
 using Typesense.Setup;
+using Wolverine;
+using Wolverine.RabbitMQ;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +35,22 @@ builder.Services.AddTypesenseClient(config =>
     ];
 });
 
+builder.Services.AddOpenTelemetry().WithTracing(tracerProviderBuilder =>
+{
+    tracerProviderBuilder.SetResourceBuilder(ResourceBuilder.CreateDefault()
+    .AddService(builder.Environment.ApplicationName))
+    .AddSource("Wolverine");
+});
+
+builder.Host.UseWolverine(opts =>
+{
+    opts.UseRabbitMqUsingNamedConnection("messaging").AutoProvision();
+    opts.ListenToRabbitQueue("questions.search", cfg =>
+    {
+        cfg.BindExchange("questions");
+    });
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -35,10 +59,59 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-//adding this as a trigger test for sonarqube.
-
 app.UseHttpsRedirection();
 
 app.MapDefaultEndpoints();
+
+app.MapGet("/search", async (string query, ITypesenseClient client) =>
+{
+    // [aspire]something
+    string? tag = null;
+    var tagMatch = Regex.Match(query, @"\[(.*?)\]");
+    if (tagMatch.Success)
+    {
+        tag = tagMatch.Groups[1].Value;
+        query = query.Replace(tagMatch.Value, "").Trim();
+    }
+
+    var searchParams = new SearchParameters(query, "title,content");
+    if (!string.IsNullOrWhiteSpace(tag))
+    {
+        searchParams.FilterBy = $"tags=[{tag}]";
+    }
+    try
+    {
+        var result = await client.Search<SearchQuestion>("questions", searchParams);
+
+        return Results.Ok(result.Hits.Select(x => x.Document));
+    }
+
+    catch (Exception e)
+    {
+        return Results.Problem("Typesense search failed", e.Message);
+    }
+});
+
+app.MapGet("/search/similar-titles", async (string query, ITypesenseClient client) =>
+{
+    var searchParams = new SearchParameters(query, "title");
+
+    try
+    {
+        var result = await client.Search<SearchQuestion>("questions", searchParams);
+
+        return Results.Ok(result.Hits.Select(h => h.Document));
+    }
+    catch (Exception e)
+    {
+        return Results.Problem("Typesense search failed", e.Message);
+    }
+});
+
+using var scope = app.Services.CreateScope();
+
+var client = scope.ServiceProvider.GetRequiredService<ITypesenseClient>();
+
+await SearchInitializer.EnsureIndexExists(client);
 
 await app.RunAsync();
