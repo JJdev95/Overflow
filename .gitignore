@@ -1,11 +1,12 @@
 .vs
+.vscode
 bin/
 obj/
 /packages/
 riderModule.iml
 /_ReSharper.Caches/
 /infra/.env
-/infra/realms/overflow-realm.json
+/infra/realms/master-realm.json
 /infra/.env.Production
 /infra/devcerts/*
 /infra/do/*
