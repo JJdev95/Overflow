@@ -61,7 +61,10 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     [HttpGet("{id}")]
     public async Task<ActionResult<Question>> GetQuestion(string id)
     {
-        var question = await db.Questions.FindAsync(id);
+        var question = await db.Questions
+        .Include(q => q.Answers)
+        .FirstOrDefaultAsync(q => q.Id == id);
+
         if (question is null) return NotFound();
 
         await db.Questions.Where(x => x.Id == id)
@@ -75,6 +78,7 @@ public class QuestionsController(QuestionDbContext db, IMessageBus bus, TagServi
     public async Task<ActionResult> UpdateQuestion(string id, CreateQuestionDto dto)
     {
         var question = await db.Questions.FindAsync(id);
+
         if (question is null) return NotFound();
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

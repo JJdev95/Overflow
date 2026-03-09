@@ -50,6 +50,7 @@ var searchService = builder.AddProject<Projects.SearchService>("search-svc")
     .WaitFor(typesense)
     .WaitFor(rabbitmq);
 
+// This is only for local development. In production, the YARP gateway will be exposed through the nginx-proxy container
 var yarp = builder.AddYarp("gateway")
     .WithConfiguration(yarpBuilder =>
     {
@@ -58,9 +59,26 @@ var yarp = builder.AddYarp("gateway")
         yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
     })
     .WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
-    .WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true)
+    .WithHostPort(8001)
     .WithEnvironment("VIRTUAL_HOST", "api.overflow.local")
     .WithEnvironment("VIRTUAL_PORT", "8001");
+
+// This is meant for production, where the YARP gateway is exposed through the nginx-proxy container. It won't work in development because the nginx-proxy container isn't used there
+// var yarp = builder.AddYarp("gateway")
+//     .WithConfiguration(yarpBuilder =>
+//     {
+//         yarpBuilder.AddRoute("/questions/{**catch-all}", questionService);
+//         yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
+//         yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
+//     })
+//     .WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
+//     .WithEndpoint(port: 8001, scheme: "http", targetPort: 8001, name: "gateway", isExternal: true)
+//     .WithEnvironment("VIRTUAL_HOST", "api.overflow.local")
+//     .WithEnvironment("VIRTUAL_PORT", "8001");
+
+var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
+    .WithReference(keycloak)
+    .WithHttpEndpoint(env: "PORT", port: 3000);
 
 if (!builder.Environment.IsDevelopment())
 {
@@ -70,3 +88,4 @@ if (!builder.Environment.IsDevelopment())
 }
 
 await builder.Build().RunAsync();
+
