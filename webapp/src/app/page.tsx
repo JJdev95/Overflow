@@ -1,5 +1,4 @@
 import { AcademicCapIcon } from "@heroicons/react/24/solid";
-import { Button } from "@heroui/button";
 
 export default function Home() {
   return (

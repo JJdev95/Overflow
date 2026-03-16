@@ -8,16 +8,17 @@ type Params = Promise<{ id: string }>;
 
 export default async function QuestionDetailed({ params }: Readonly<{ params: Params }>) {
     const { id } = await params;
-    const question = await getQuestionById(id);
-    console.log(question);
+    const { data: question, error } = await getQuestionById(id);
+    if (error) throw error;
+
     return (
         <div className="w-full">
-            <QuestionDetailsHeader question={question} />
-            <QuestionContent question={question} />
-            {question.answers.length > 0 && (
-                <AnswersHeader answerCount={question.answers.length} />
+            <QuestionDetailsHeader question={question!} />
+            <QuestionContent question={question!} />
+            {question!.answers.length > 0 && (
+                <AnswersHeader answerCount={question!.answers.length} />
             )};
-            {question.answers.map(answer => (
+            {question!.answers.map(answer => (
                 <AnswerContent key={answer.id} answer={answer} />
             ))}
         </div>

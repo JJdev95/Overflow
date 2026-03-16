@@ -6,6 +6,7 @@ import { Chip } from "@heroui/chip";
 import { Avatar } from "@heroui/avatar";
 import clsx from "clsx";
 import { CheckIcon } from "@heroicons/react/24/outline";
+import { timeAgo } from "@/lib/util";
 
 type Props = {
     question: Question;
@@ -14,7 +15,7 @@ type Props = {
 export default function QuestionCard({ question }: Readonly<Props>) {
     return (
         <div className='flex gap-6 px-6'>
-            <div className='flex flex-col items-end gap-4 text-sm font-light min-w-[6rem]'>
+            <div className='flex flex-col items-end gap-4 text-sm font-light min-w-24'>
                 <div>{question.votes} {question.votes === 1 ? 'vote' : 'votes'}</div>
                 <div
                     className={clsx('flex justify-end rounded', {
@@ -59,7 +60,7 @@ export default function QuestionCard({ question }: Readonly<Props>) {
                             <Link href={`/profiles/${question.askerId}`} className='text-secondary'>
                                 {question.askerId}
                             </Link>
-                            <span>asked {question.createdAt}</span>
+                            <span>asked {timeAgo(question.createdAt)}</span>
                         </div>
                     </div>
                 </div>

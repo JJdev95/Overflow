@@ -1,11 +1,12 @@
 import { Answer } from "@/lib/types";
+import { timeAgo } from "@/lib/util";
 import { Avatar } from "@heroui/avatar";
 
 export default function AnswerFooter({ answer }: Readonly<{ answer: Answer }>) {
     return (
         <div className='flex justify-end mt-4'>
             <div className='flex flex-col basis-2/5 bg-primary/10 px-3 py-2 gap-2 rounded-lg'>
-                <span className='text-sm font-extralight'>answered {answer.createdAt}</span>
+                <span className='text-sm font-extralight'>answered {timeAgo(answer.createdAt)}</span>
                 <div className='flex items-center gap-3'>
                     <Avatar className='h-6 w-6' color='secondary'
                         name={answer.userId.charAt(0)} />
