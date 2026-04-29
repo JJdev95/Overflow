@@ -3,6 +3,7 @@ import QuestionDetailsHeader from "./QuestionDetailsHeader";
 import QuestionContent from "./QuestionContent";
 import AnswerContent from "./AnswerContent";
 import AnswersHeader from "./AnswerHeader";
+import AnswerForm from "./AnswerForm";
 
 type Params = Promise<{ id: string }>;
 
@@ -21,6 +22,7 @@ export default async function QuestionDetailed({ params }: Readonly<{ params: Pa
             {question!.answers.map(answer => (
                 <AnswerContent key={answer.id} answer={answer} />
             ))}
+            <AnswerForm questionId={id} />
         </div>
     )
 }
