@@ -79,7 +79,11 @@ var yarp = builder.AddYarp("gateway")
 
 var webapp = builder.AddJavaScriptApp("webapp", "../webapp")
     .WithReference(keycloak)
-    .WithHttpEndpoint(env: "PORT", port: 3000);
+    .WithHttpEndpoint(env: "PORT", port: 3000, targetPort: 4000)
+    .WithEnvironment("VIRTUAL_HOST", "app.overflow.local")
+    .WithEnvironment("VIRTUAL_PORT", "4000")
+    .PublishAsDockerFile();
+
 
 if (!builder.Environment.IsDevelopment())
 {
