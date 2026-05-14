@@ -5,6 +5,7 @@
   </Folder>
   <Project Path="Overflow.AppHost/Overflow.AppHost.csproj" />
   <Project Path="Overflow.ServiceDefaults/Overflow.ServiceDefaults.csproj" />
+  <Project Path="ProfileService/ProfileService.csproj" />
   <Project Path="QuestionService.Tests/QuestionService.Tests.csproj" />
   <Project Path="QuestionService/QuestionService.csproj" />
   <Project Path="SearchService/SearchService.csproj" />

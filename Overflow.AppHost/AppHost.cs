@@ -16,7 +16,7 @@ var keycloak = builder.AddKeycloak("keycloak", 6001)
 
 var postgres = builder.AddPostgres("postgres", port: 5432)
     .WithDataVolume("postgres-data")
-    .WithPgAdmin();
+    .WithPgWeb();
 
 var typesenseApiKey = builder.AddParameter("typesense-api-key", secret: true);
 
@@ -30,6 +30,9 @@ var typesense = builder.AddContainer("typesense", "typesense/typesense", "29.0")
 var typesenseContainer = typesense.GetEndpoint("typesense");
 
 var questionDb = postgres.AddDatabase("questionDb");
+
+var profileDb = postgres.AddDatabase("profileDb");
+
 
 var rabbitmq = builder.AddRabbitMQ("messaging")
     .WithDataVolume("rabbitmq-data")
@@ -50,6 +53,15 @@ var searchService = builder.AddProject<Projects.SearchService>("search-svc")
     .WaitFor(typesense)
     .WaitFor(rabbitmq);
 
+
+var profileService = builder.AddProject<Projects.ProfileService>("profile-svc")
+    .WithReference(keycloak)
+    .WithReference(profileDb)
+    .WithReference(rabbitmq)
+    .WaitFor(keycloak)
+    .WaitFor(rabbitmq)
+    .WaitFor(profileDb);
+
 // This is only for local development. In production, the YARP gateway will be exposed through the nginx-proxy container
 var yarp = builder.AddYarp("gateway")
     .WithConfiguration(yarpBuilder =>
@@ -58,6 +70,7 @@ var yarp = builder.AddYarp("gateway")
         yarpBuilder.AddRoute("/test/{**catch-all}", questionService);
         yarpBuilder.AddRoute("/tags/{**catch-all}", questionService);
         yarpBuilder.AddRoute("/search/{**catch-all}", searchService);
+        yarpBuilder.AddRoute("/profiles/{**catch-all}", profileService);
     })
     .WithEnvironment("ASPNETCORE_URLS", "http://*:8001")
     .WithHostPort(8001)
